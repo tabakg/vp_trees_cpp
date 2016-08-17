@@ -1,6 +1,5 @@
 #include <iostream>
 #include <random>
-#include "vector_stuff.h"
 
 using namespace std;
 
@@ -38,7 +37,6 @@ class node {
       cout << "}.";
     }
 };
-
 
 int main(){
   node<int> * myNode = new node<int>(5);

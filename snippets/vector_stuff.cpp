@@ -36,21 +36,6 @@ double euclidean_metric(vector<double> const& u, vector<double> const& v){
   return l2_norm(vector_difference(u,v));
 }
 
-// class l2_functor{
-//   public:
-//     double operator()(vector<double> const& u,vector<double> const& v){
-//       return l2_norm(vector_difference(u,v));
-//       }
-//     }
-// };
-
-// template <typename F>
-// template <typename P>
-// void apply_function(F f, P p){
-//   cout << f(p);
-// }
-
-
 int main(){
 
   default_random_engine generator;

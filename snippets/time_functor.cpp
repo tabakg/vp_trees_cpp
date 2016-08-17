@@ -4,6 +4,15 @@
 
 using namespace std;
 
+template <typename Output, typename... Arguments>
+Output time_it(Output (*func) (Arguments... ), Arguments... args ){
+  auto start = chrono::steady_clock::now();
+  Output val = func(args...);
+  auto duration = chrono::steady_clock::now() - start;
+  cout << duration.count() * 1e-9 << " seconds.\n";
+  return val;
+}
+
 int add_one(int x){
   return x + 1;
 }
@@ -17,15 +26,6 @@ int add_one_incrementally(int x, int y){
     x += 1;
   }
   return x;
-}
-
-template <typename Output, typename... Arguments>
-Output time_it(Output (*func) (Arguments... ), Arguments... args ){
-  auto start = chrono::steady_clock::now();
-  Output val = func(args...);
-  auto duration = chrono::steady_clock::now() - start;
-  cout << duration.count() * 1e-9 << " seconds.\n";
-  return val;
 }
 
 int main(){
