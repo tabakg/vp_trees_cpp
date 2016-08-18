@@ -69,21 +69,22 @@ class node {
     }
 };
 
-int main(){
+vector<vector<double>> make_random_data(int num_data_points, int dim){
   default_random_engine generator;
   normal_distribution<double> distribution(0.0,1.0);
-
-  const int data_points = 4;
-  const int dim = 2;
-  vector<vector<double>> data(data_points, vector<double>(dim) );
-  for(int i = 0; i < data_points; i++){
+  vector<vector<double>> data(num_data_points, vector<double>(dim) );
+  for(int i = 0; i < num_data_points; i++){
     for(int j = 0; j < dim; j++){
       data[i][j] = distribution(generator);
     }
   }
-
-  cout << "[";
-  for(int i = 0; i < data_points; i++){
+  return data;
+}
+void print_data(vector<vector<double>> data){
+  int num_data_points = data.size();
+  int dim = data[0].size();
+  cout << "Data: [";
+  for(int i = 0; i < num_data_points; i++){
     cout << "[";
     for(int j = 0; j < dim; j++){
       cout << data[i][j] << ", ";
@@ -91,4 +92,19 @@ int main(){
     cout << "], ";
   }
   cout << "]." << endl;
+
+  cout << "Norms: [";
+  for(int i = 0; i < num_data_points; i++){
+    cout << l2_norm(data[i]) << ", ";
+  }
+  cout << "]." << endl;
+}
+
+int main(){
+
+  const int num_data_points = 4;
+  const int dim = 2;
+  vector<vector<double>> data = make_random_data(num_data_points,dim);
+  print_data(data);
+
 }
