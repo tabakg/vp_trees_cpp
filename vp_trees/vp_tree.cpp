@@ -74,6 +74,15 @@ class node {
     T get_point(){
       return this->point;
     }
+    double get_distance(){
+      return this->distance;
+    }
+    node<T>* get_left_child(){
+      return this->left;
+    }
+    node<T>* get_right_child(){
+      return this->right;
+    }
     string print_tree(){
       string s = "{point: " + vec_to_string(this->point);
       s += ", distance: " + to_string(this->distance);
@@ -127,13 +136,9 @@ node<vector<double>>* vp_tree(vector<vector<double>> & data){
     return NULL;
   }
   else if (data.size() == 1){
-    cout << data.size() << endl;
-
     return new node<vector<double>>(data.back());
   }
   else if (data.size() == 2){
-    cout << data.size() << endl;
-
     vector<double> vantage_point=data.back();
     data.pop_back();
 
@@ -142,8 +147,6 @@ node<vector<double>>* vp_tree(vector<vector<double>> & data){
     return new node<vector<double>>(vantage_point,left,euclidean_metric(vantage_point, left->get_point() ));
   }
   else{
-    cout << data.size() << endl;
-
     vector<double> vantage_point=data.back();
     data.pop_back();
 
@@ -157,10 +160,6 @@ node<vector<double>>* vp_tree(vector<vector<double>> & data){
     vector<vector<double>> close_points (data.begin() + half_way, data.end() );
     vector<vector<double>> far_points (data.begin(), data.begin() + half_way );
 
-    print_data(data);
-    print_data(close_points);
-    print_data(far_points);
-
     node<vector<double>>* left = vp_tree(close_points);
     node<vector<double>>* right = vp_tree(far_points);
 
@@ -168,18 +167,49 @@ node<vector<double>>* vp_tree(vector<vector<double>> & data){
   }
 };
 
-vector <vector<double>> find_within_epsilon(node<vector<double>>* vp_tree,
-  vector<double> point, double epsilon, vector <vector<double>> found_points){
-    return vector <vector<double>> (2,vector<double>(3.0));
+void find_within_epsilon_helper(node<vector<double>>* vp_tree,
+  vector<double> const& point, double epsilon, vector<vector<double>>& found_points){
+  if (vp_tree == NULL){
+    return;
+  }
+  else{
+    double distance_root_to_point = euclidean_metric(vp_tree->get_point(), point);
+    if (distance_root_to_point <= epsilon){
+      found_points.push_back(vp_tree->get_point() );
+    }
+    double cutoff_distance = vp_tree->get_distance();
+    if (cutoff_distance == -1.){
+      return;
+    }
+    if (distance_root_to_point - cutoff_distance <= epsilon){
+      node<vector<double>>* left_child = vp_tree->get_left_child();
+      if (left_child != NULL){
+        find_within_epsilon_helper(left_child,point,epsilon,found_points);
+      }
+    }
+    if (cutoff_distance - distance_root_to_point <= epsilon){
+      node<vector<double>>* right_child = vp_tree->get_right_child();
+      if (right_child != NULL){
+        find_within_epsilon_helper(right_child,point,epsilon,found_points);
+      }
+    }
+  }
+}
+
+vector<vector<double>> find_within_epsilon(node<vector<double>>* vp_tree,
+  vector<double> const& point, double epsilon){
+    vector<vector<double>> found_points = vector<vector<double>> ();
+    find_within_epsilon_helper(vp_tree,point,epsilon,found_points);
+    return found_points;
 }
 
 int main(){
 
   // // make zero vector
-  vector<double> zero_vec = vector<double>(2);
+  vector<double> zero_vec = vector<double>(1);
   // cout << vec_to_string(zero_vec);
 
-  const int num_data_points = 3;
+  const int num_data_points = 100;
   const int dim = 1;
   vector<vector<double>> data = make_random_data(num_data_points,dim);
 
@@ -198,12 +228,16 @@ int main(){
 
   // // make a node in the tree and print the tree.
   node<vector<double>>* tree = vp_tree(data);
-  cout << tree->print_tree() << endl;
+  // cout << tree->print_tree() << endl;
 
   // // sort the data by distance from zero_vec using euclidean_metric.
   // sort(data.begin(),data.end(),
   //   [zero_vec](vector<double> a, vector<double> b)
   //   { return euclidean_metric(a,zero_vec) > euclidean_metric(b,zero_vec);} );
   // print_data(data);
+
+  // // let's get only the points within 1.0 of zero_vec.
+  vector<vector<double>> close_points = find_within_epsilon(tree, zero_vec, 1.0);
+  print_data(close_points);
 
 }
