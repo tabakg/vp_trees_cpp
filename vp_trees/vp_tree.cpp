@@ -131,7 +131,7 @@ void print_data(vector<vector<double>> const& data){
 }
 
 // NOTE: as written here, data may be modified (i.e. re-ordered).
-node<vector<double>>* vp_tree(vector<vector<double>> & data){
+node<vector<double>>* vp_tree(vector<vector<double>> data){
   if (data.size() == 0){
     return NULL;
   }
@@ -197,10 +197,17 @@ void find_within_epsilon_helper(node<vector<double>>* vp_tree,
 }
 
 vector<vector<double>> find_within_epsilon(node<vector<double>>* vp_tree,
-  vector<double> const& point, double epsilon){
+  vector<double> const point, double epsilon){
     vector<vector<double>> found_points = vector<vector<double>> ();
     find_within_epsilon_helper(vp_tree,point,epsilon,found_points);
     return found_points;
+}
+
+int all_points_within_epsilon_timer(vector<vector<double>> data,node<vector<double>>* tree, double epsilon){
+  for (int i = 0; i < data.size(); i++){
+    find_within_epsilon(tree, data[i], epsilon);
+  }
+  return 0;
 }
 
 int main(){
@@ -209,7 +216,7 @@ int main(){
   vector<double> zero_vec = vector<double>(1);
   // cout << vec_to_string(zero_vec);
 
-  const int num_data_points = 100;
+  const int num_data_points = 1000;
   const int dim = 1;
   vector<vector<double>> data = make_random_data(num_data_points,dim);
 
@@ -228,7 +235,7 @@ int main(){
 
   // // make a node in the tree and print the tree.
   node<vector<double>>* tree = vp_tree(data);
-  // cout << tree->print_tree() << endl;
+
 
   // // sort the data by distance from zero_vec using euclidean_metric.
   // sort(data.begin(),data.end(),
@@ -238,6 +245,11 @@ int main(){
 
   // // let's get only the points within 1.0 of zero_vec.
   vector<vector<double>> close_points = find_within_epsilon(tree, zero_vec, 1.0);
-  print_data(close_points);
+  // print_data(close_points);
+
+  // // let's time the results.
+  time_it(vp_tree,data);
+  time_it(find_within_epsilon,tree, zero_vec, 1.0);
+  time_it(all_points_within_epsilon_timer,data,tree,1.0);
 
 }
