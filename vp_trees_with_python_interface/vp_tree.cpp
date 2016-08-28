@@ -1,17 +1,49 @@
+#include <boost/python.hpp>
 #include <iostream>
 #include <random>
 #include <vector>
-#include <chrono>
+
+typedef boost::python::list pylist;
+typedef std::vector<std::vector<double>> double_vec;
+
 using namespace std;
 
-template <typename Output, typename... Arguments>
-Output time_it(Output (*func) (Arguments... ), Arguments... args ){
-  auto start = chrono::steady_clock::now();
-  Output val = func(args...);
-  auto duration = chrono::steady_clock::now() - start;
-  cout << duration.count() * 1e-9 << " seconds.\n";
-  return val;
+pylist double_vec_to_pylist(double_vec vec){
+  pylist list;
+  for (unsigned i = 0; i < vec.size(); i++) {
+    pylist sublist;
+    for (unsigned j = 0; j < vec.at(i).size(); j++){
+      sublist.append(vec.at(i).at(j));
+    }
+    list.append(sublist);
+  }
+  return list;
 }
+double_vec pylist_to_double_vec(pylist list){
+  unsigned size1 = len(list);
+  unsigned size2 = len(list[0]);
+  double_vec vec (size1, std::vector<double>(size2) );
+  for (unsigned i = 0; i < size1; ++ i) {
+    for (unsigned j = 0; j < size2; ++ j){
+      vec.at(i).at(j) = boost::python::extract<double>(list[i][j]);
+    }
+  }
+  return vec;
+}
+vector<double> pypoint_to_point(pylist list){
+  unsigned size = len(list);
+  vector<double> vec (size);
+  for (unsigned i = 0; i < size; ++ i) {
+      vec[i] = boost::python::extract<double>(list[i]);
+  }
+  return vec;
+}
+
+pylist list_double_vec_list_test(pylist list){
+  return double_vec_to_pylist(pylist_to_double_vec(list));
+}
+
+///////////////////
 
 template <typename R>
 string vec_to_string(vector<R> const& vec){
@@ -23,7 +55,6 @@ string vec_to_string(vector<R> const& vec){
   s += "]";
   return s;
 }
-
 double l2_norm(vector<double> const& u) {
     double accum = 0.;
     for (double x : u) {
@@ -31,7 +62,6 @@ double l2_norm(vector<double> const& u) {
     }
     return sqrt(accum);
 }
-
 vector<double> vector_difference(vector<double> const& u, vector<double> const& v){
   if (u.size() != v.size()){
     throw invalid_argument("vectors have different sizes.");
@@ -42,11 +72,9 @@ vector<double> vector_difference(vector<double> const& u, vector<double> const& 
   }
   return w;
 }
-
 double euclidean_metric(vector<double> const& u, vector<double> const& v){
   return l2_norm(vector_difference(u,v));
 }
-
 template <typename T>
 class node {
   private:
@@ -100,7 +128,6 @@ class node {
       return s;
     }
 };
-
 vector<vector<double>> make_random_data(int num_data_points, int dim){
   default_random_engine generator;
   normal_distribution<double> distribution(0.0,1.0);
@@ -131,8 +158,6 @@ void print_data(vector<vector<double>> const& data){
   }
   cout << "]." << endl;
 }
-
-// NOTE: as written here, data may be modified (i.e. re-ordered).
 node<vector<double>>* vp_tree(vector<vector<double>> data){
   if (data.size() == 0){
     return NULL;
@@ -168,7 +193,6 @@ node<vector<double>>* vp_tree(vector<vector<double>> data){
     return new node<vector<double>>(vantage_point,left,right,euclidean_metric(vantage_point, left->get_point() ) );
   }
 };
-
 void find_within_epsilon_helper(node<vector<double>>* vp_tree,
   vector<double> const& point, double epsilon, vector<vector<double>>& found_points){
   if (vp_tree == NULL){
@@ -197,7 +221,6 @@ void find_within_epsilon_helper(node<vector<double>>* vp_tree,
     }
   }
 }
-
 vector<vector<double>> find_within_epsilon(node<vector<double>>* vp_tree,
   vector<double> const point, double epsilon){
     vector<vector<double>> found_points = vector<vector<double>> ();
@@ -205,88 +228,46 @@ vector<vector<double>> find_within_epsilon(node<vector<double>>* vp_tree,
     return found_points;
 }
 
-int all_points_within_epsilon_timer(vector<vector<double>> data,node<vector<double>>* tree, double epsilon){
-  for (int i = 0; i < data.size(); i++){
-    find_within_epsilon(tree, data[i], epsilon);
-  }
-  return 0;
-}
-
 class tree_container{
   private:
     node<vector<double>>* tree;
 
   public:
+    tree_container(){
+      this->tree = NULL;
+    }
     tree_container(vector<vector<double>> data){
       this->tree = ::vp_tree(data);
+    }
+    tree_container(pylist data){
+      double_vec data_in_vecs = pylist_to_double_vec(data);
+      this->tree = ::vp_tree(data_in_vecs);
     }
     vector<vector<double>> find_within_epsilon(
       vector<double> const point, double epsilon){
         return ::find_within_epsilon(this->tree, point, epsilon);
     }
+    pylist find_within_epsilon_py(
+      pylist pypoint, double epsilon){
+        vector<double> point = pypoint_to_point(pypoint);
+        return double_vec_to_pylist(
+          ::find_within_epsilon(this->tree, point, epsilon));
+    }
+    std::string print_tree(){
+      return this->tree->print_tree();
+    }
 };
 
-bool check_if_same_vec_of_vecs(vector<vector<double>> vec1,vector<vector<double>> vec2){
-  if (vec1.size() != vec2.size()){
-    return false;
-  }
-  for(unsigned i = 0; i < vec1.size(); i ++){
-    if (vec1[i].size() != vec2[i].size()){
-      return false;
-    }
-    for(unsigned j = 0; j < vec1[i].size(); j++){
-      if (vec1[i][j] != vec2[i][j]){
-        return false;
-      }
-    }
-  }
-  return true;
-}
+BOOST_PYTHON_MODULE(vp_tree) {
+    using namespace boost::python;
 
-int main(){
+    def("list_double_vec_list_test",list_double_vec_list_test);
 
-  // // make zero vector
-  vector<double> zero_vec = vector<double>(1);
-  // cout << vec_to_string(zero_vec);
-
-  const int num_data_points = 1000;
-  const int dim = 1;
-  vector<vector<double>> data = make_random_data(num_data_points,dim);
-
-  // // print out a vector.
-  // cout << vec_to_string(data[0]);
-
-  // sample trees
-  // node<vector<double>> *n = new node<vector<double>>(zero_vec);
-  // cout << n->print_tree() << endl;
-  //
-  // node<vector<double>> *m = new node<vector<double>>(zero_vec,n,5.0);
-  // cout << m->print_tree() << endl;
-
-  // // sample data printed out
-  // print_data(data);
-
-  // // make a node in the tree and print the tree.
-  node<vector<double>>* tree = vp_tree(data);
-
-  // // sort the data by distance from zero_vec using euclidean_metric.
-  // sort(data.begin(),data.end(),
-  //   [zero_vec](vector<double> a, vector<double> b)
-  //   { return euclidean_metric(a,zero_vec) > euclidean_metric(b,zero_vec);} );
-  // print_data(data);
-
-  // // let's get only the points within 1.0 of zero_vec.
-  vector<vector<double>> close_points = find_within_epsilon(tree, zero_vec, 1.0);
-  // print_data(close_points);
-
-  // // let's time the results.
-  // time_it(vp_tree,data);
-  // time_it(find_within_epsilon,tree, zero_vec, 1.0);
-  // time_it(all_points_within_epsilon_timer,data,tree,1.0);
-
-  // // Next, let's try to make a container for the tree.
-  tree_container my_tree = tree_container(data);
-  vector<vector<double>> close_points2 = my_tree.find_within_epsilon(zero_vec, 1.0);
-
-  cout << check_if_same_vec_of_vecs(close_points,close_points2) << endl;
+    class_<tree_container>("tree_container", init<>()  )
+      .def(init<double_vec>()) // this constructor woudln't work using python list of lists
+      .def(init<pylist>()) // this costructor will work with python list of lists
+      // .def("find_within_epsilon",&tree_container::find_within_epsilon) // not compatible with python because of output types
+      .def("find_within_epsilon",&tree_container::find_within_epsilon_py)
+      .def("print_tree",&tree_container::print_tree)
+    ;
 }
