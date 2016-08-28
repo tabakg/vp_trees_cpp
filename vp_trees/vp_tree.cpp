@@ -31,6 +31,7 @@ double l2_norm(vector<double> const& u) {
     }
     return sqrt(accum);
 }
+
 vector<double> vector_difference(vector<double> const& u, vector<double> const& v){
   if (u.size() != v.size()){
     throw invalid_argument("vectors have different sizes.");
@@ -41,6 +42,7 @@ vector<double> vector_difference(vector<double> const& u, vector<double> const& 
   }
   return w;
 }
+
 double euclidean_metric(vector<double> const& u, vector<double> const& v){
   return l2_norm(vector_difference(u,v));
 }
@@ -178,7 +180,7 @@ void find_within_epsilon_helper(node<vector<double>>* vp_tree,
       found_points.push_back(vp_tree->get_point() );
     }
     double cutoff_distance = vp_tree->get_distance();
-    if (cutoff_distance == -1.){
+    if (cutoff_distance < -0.5){
       return;
     }
     if (distance_root_to_point - cutoff_distance <= epsilon){
