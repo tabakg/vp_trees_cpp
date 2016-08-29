@@ -38,7 +38,7 @@ print ("average number of neighbors is " + str(ave_num_nbrs) )
 
 t4 = time.time()
 
-print("making tree", t1-t0, "\n")
-print("making tree print statement",t2-t1, "\n")
-print("finding near epsilon around zero", t3-t2, "\n")
-print("finding near epsilon for all points", t4-t3, "\n")
+print("making tree", t1-t0)
+print("making tree print statement",t2-t1)
+print("finding near epsilon around zero", t3-t2)
+print("finding near epsilon for all points", t4-t3)
