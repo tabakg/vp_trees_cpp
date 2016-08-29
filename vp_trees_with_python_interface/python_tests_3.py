@@ -6,7 +6,7 @@ from numpy.random import normal
 import random
 
 dim = 2
-data_size = 100
+data_size = 10
 
 epsilon = 0.1
 
@@ -17,14 +17,16 @@ print("Points are normalized and have isotropic distribution; cutoff epsilon = "
 
 data_not_normalized = np.reshape(np.array([random.normalvariate(0,1) for i in range(data_size*dim)]),(data_size,dim) ).tolist()
 
-data = [ (point / la.norm(point)).tolist() for point in data_not_normalized]
+data = [ (point / la.norm(point)).tolist() for point in data_not_normalized ]
 
 t0 = time.time()
 tree = vp_tree.tree_container(data,"FS_metric")
 t1 = time.time()
 s = tree.print_tree() ## print tree contents.
 t2 = time.time()
-close_points = tree.find_within_epsilon([0.]*dim,epsilon,"FS_metric");
+default_vec = [0.]*dim
+default_vec[0] = 1
+close_points = tree.find_within_epsilon(default_vec,epsilon,"FS_metric");
 t3 = time.time()
 
 ave_num_nbrs = 0

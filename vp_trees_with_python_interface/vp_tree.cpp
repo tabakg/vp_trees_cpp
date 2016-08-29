@@ -111,8 +111,6 @@ double FS_metric(vector<double> const& u, vector<double> const& v){
   double inner = ( pow(inner_prod(u_r,v_r) + inner_prod(u_i,v_i),2)
                      + pow(inner_prod(u_r,v_i) - inner_prod(u_i,v_r),2) );
 
-  // std::cout << inner  << std::endl;
-
   if (inner >= 1.){ // this might happen due to numerical error. We don't want to pass this to acos.
     return 0.;
   }
