@@ -42,3 +42,5 @@ print("making tree", t1-t0)
 print("making tree print statement",t2-t1)
 print("finding near epsilon around zero", t3-t2)
 print("finding near epsilon for all points", t4-t3)
+
+# print(vp_tree.hello())

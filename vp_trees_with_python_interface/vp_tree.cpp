@@ -2,13 +2,15 @@
 #include <iostream>
 #include <random>
 #include <vector>
-
 #include <math.h>       /* sqrt, acos */
+
+#include "conversions.h"
 
 typedef boost::python::list pylist;
 typedef std::vector<std::vector<double>> double_vec;
 
-using namespace std;
+// pylist double_vec_to_pylist(double_vec vec){return conversions::double_vec_to_pylist(vec);}
+// std::string hello(){return conversions::hello();}
 
 pylist double_vec_to_pylist(double_vec vec){
   pylist list;
@@ -32,9 +34,9 @@ double_vec pylist_to_double_vec(pylist list){
   }
   return vec;
 }
-vector<double> pypoint_to_point(pylist list){
+std::vector<double> pypoint_to_point(pylist list){
   unsigned size = len(list);
-  vector<double> vec (size);
+  std::vector<double> vec (size);
   for (unsigned i = 0; i < size; ++ i) {
       vec[i] = boost::python::extract<double>(list[i]);
   }
@@ -48,35 +50,35 @@ pylist list_double_vec_list_test(pylist list){
 ///////////////////
 
 template <typename R>
-string vec_to_string(vector<R> const& vec){
-  string s = "[";
+std::string vec_to_string(std::vector<R> const& vec){
+  std::string s = "[";
   for(int i = 0; i < vec.size(); i++){
-    s += to_string(vec[i]);
+    s += std::to_string(vec[i]);
     s += ", ";
   }
   s += "]";
   return s;
 }
-double l2_norm(vector<double> const& u) {
+double l2_norm(std::vector<double> const& u) {
     double accum = 0.;
     for (double x : u) {
         accum += x * x;
     }
     return sqrt(accum);
 }
-vector<double> vector_difference(vector<double> const& u, vector<double> const& v){
+std::vector<double> vector_difference(std::vector<double> const& u, std::vector<double> const& v){
   if (u.size() != v.size()){
-    throw invalid_argument("vectors have different sizes.");
+    throw std::invalid_argument("vectors have different sizes.");
   }
-  vector<double> w(u.size());
+  std::vector<double> w(u.size());
   for(int i = 0; i < w.size(); i++){
     w[i] = u[i] - v[i];
   }
   return w;
 }
-double inner_prod(vector<double> const& u, vector<double> const& v){
+double inner_prod(std::vector<double> const& u, std::vector<double> const& v){
   if (u.size() != v.size()){
-    throw invalid_argument("vectors have different sizes.");
+    throw std::invalid_argument("vectors have different sizes.");
   }
   double accum = 0.;
   for (unsigned i = 0; i < u.size(); i++){
@@ -84,7 +86,7 @@ double inner_prod(vector<double> const& u, vector<double> const& v){
   }
   return accum;
 }
-double FS_metric(vector<double> const& u, vector<double> const& v){
+double FS_metric(std::vector<double> const& u, std::vector<double> const& v){
   /*
   Return the Fubini-Study metric between two vectors u, v.
 
@@ -96,17 +98,17 @@ double FS_metric(vector<double> const& u, vector<double> const& v){
     Fubini-Study metric.
   */
   if (u.size() != v.size()){
-    throw invalid_argument("vectors have different sizes.");
+    throw std::invalid_argument("vectors have different sizes.");
   }
   unsigned size = u.size();
   if (size % 2 != 0){
-    throw invalid_argument("dimension must be even!");
+    throw std::invalid_argument("dimension must be even!");
   }
   unsigned half_size = size / 2;
-  vector<double> u_r (u.begin(), u.begin() + half_size);
-  vector<double> u_i (u.begin() + half_size, u.end());
-  vector<double> v_r (v.begin(), v.begin() + half_size);
-  vector<double> v_i (v.begin() + half_size, v.end());
+  std::vector<double> u_r (u.begin(), u.begin() + half_size);
+  std::vector<double> u_i (u.begin() + half_size, u.end());
+  std::vector<double> v_r (v.begin(), v.begin() + half_size);
+  std::vector<double> v_i (v.begin() + half_size, v.end());
 
   double inner = ( pow(inner_prod(u_r,v_r) + inner_prod(u_i,v_i),2)
                      + pow(inner_prod(u_r,v_i) - inner_prod(u_i,v_r),2) );
@@ -116,7 +118,7 @@ double FS_metric(vector<double> const& u, vector<double> const& v){
   }
   return acos(inner);//acos(inner);
 }
-double distance(vector<double> const& u, vector<double> const& v, std::string metric){
+double distance(std::vector<double> const& u, std::vector<double> const& v, std::string metric){
   if(metric == "FS_metric"){
     return FS_metric(u,v);
   }
@@ -124,7 +126,7 @@ double distance(vector<double> const& u, vector<double> const& v, std::string me
     return l2_norm(vector_difference(u,v));
   }
   else{
-    throw invalid_argument("Not a known metric.");
+    throw std::invalid_argument("Not a known metric.");
   }
 }
 template <typename T>
@@ -165,9 +167,9 @@ class node {
     node<T>* get_right_child(){
       return this->right;
     }
-    string print_tree(){
-      string s = "{point: " + vec_to_string(this->point);
-      s += ", distance: " + to_string(this->distance);
+    std::string print_tree(){
+      std::string s = "{point: " + vec_to_string(this->point);
+      s += ", distance: " + std::to_string(this->distance);
       if (this->left){
         s += ", left child: ";
         s += this->left->print_tree();
@@ -180,10 +182,10 @@ class node {
       return s;
     }
 };
-vector<vector<double>> make_random_data(int num_data_points, int dim){
-  default_random_engine generator;
-  normal_distribution<double> distribution(0.0,1.0);
-  vector<vector<double>> data(num_data_points, vector<double>(dim) );
+double_vec make_random_data(int num_data_points, int dim){
+  std::default_random_engine generator;
+  std::normal_distribution<double> distribution(0.0,1.0);
+  double_vec data(num_data_points, std::vector<double>(dim) );
   for(int i = 0; i < num_data_points; i++){
     for(int j = 0; j < dim; j++){
       data[i][j] = distribution(generator);
@@ -191,8 +193,8 @@ vector<vector<double>> make_random_data(int num_data_points, int dim){
   }
   return data;
 }
-vector<vector<double>> make_normalized_random_data(int num_data_points, int dim){
-  vector<vector<double>> data = make_random_data(num_data_points, dim);
+double_vec make_normalized_random_data(int num_data_points, int dim){
+  double_vec data = make_random_data(num_data_points, dim);
   double norm;
   for (unsigned i = 0; i < num_data_points; i ++){
     norm = l2_norm(data[i]);
@@ -202,61 +204,61 @@ vector<vector<double>> make_normalized_random_data(int num_data_points, int dim)
   }
   return data;
 }
-void print_data(vector<vector<double>> const& data){
+void print_data(double_vec const& data){
   int num_data_points = data.size();
   int dim = data[0].size();
-  cout << "Data: [";
+  std::cout << "Data: [";
   for(int i = 0; i < num_data_points; i++){
-    cout << "[";
+    std::cout << "[";
     for(int j = 0; j < dim; j++){
-      cout << data[i][j] << ", ";
+      std::cout << data[i][j] << ", ";
     }
-    cout << "], ";
+    std::cout << "], ";
   }
-  cout << "]." << endl;
+  std::cout << "]." << std::endl;
 
-  cout << "Norms: [";
+  std::cout << "Norms: [";
   for(int i = 0; i < num_data_points; i++){
-    cout << l2_norm(data[i]) << ", ";
+    std::cout << l2_norm(data[i]) << ", ";
   }
-  cout << "]." << endl;
+  std::cout << "]." << std::endl;
 }
-node<vector<double>>* vp_tree(vector<vector<double>> data, std::string metric){
+node<std::vector<double>>* vp_tree(double_vec data, std::string metric){
   if (data.size() == 0){
     return NULL;
   }
   else if (data.size() == 1){
-    return new node<vector<double>>(data.back());
+    return new node<std::vector<double>>(data.back());
   }
   else if (data.size() == 2){
-    vector<double> vantage_point=data.back();
+    std::vector<double> vantage_point=data.back();
     data.pop_back();
 
-    vector<vector<double>> singleton (data.begin(), data.end() );
-    node<vector<double>>* left = vp_tree(singleton,metric);
-    return new node<vector<double>>(vantage_point,left,distance(vantage_point, left->get_point(), metric ));
+    double_vec singleton (data.begin(), data.end() );
+    node<std::vector<double>>* left = vp_tree(singleton,metric);
+    return new node<std::vector<double>>(vantage_point,left,distance(vantage_point, left->get_point(), metric ));
   }
   else{
-    vector<double> vantage_point=data.back();
+    std::vector<double> vantage_point=data.back();
     data.pop_back();
 
     sort(data.begin(),data.end(),
-      [vantage_point,metric](vector<double> a, vector<double> b)
+      [vantage_point,metric](std::vector<double> a, std::vector<double> b)
       { return distance(a,vantage_point,metric) > distance(b,vantage_point,metric);} );
 
     int half_way = int( (data.size() + 1 ) / 2 );
 
-    vector<vector<double>> close_points (data.begin() + half_way, data.end() );
-    vector<vector<double>> far_points (data.begin(), data.begin() + half_way );
+    double_vec close_points (data.begin() + half_way, data.end() );
+    double_vec far_points (data.begin(), data.begin() + half_way );
 
-    node<vector<double>>* left = vp_tree(close_points,metric);
-    node<vector<double>>* right = vp_tree(far_points,metric);
+    node<std::vector<double>>* left = vp_tree(close_points,metric);
+    node<std::vector<double>>* right = vp_tree(far_points,metric);
 
-    return new node<vector<double>>(vantage_point,left,right,distance(vantage_point, left->get_point(), metric ) );
+    return new node<std::vector<double>>(vantage_point,left,right,distance(vantage_point, left->get_point(), metric ) );
   }
 };
-void find_within_epsilon_helper(node<vector<double>>* vp_tree,
-  vector<double> const& point, double epsilon, vector<vector<double>>& found_points,
+void find_within_epsilon_helper(node<std::vector<double>>* vp_tree,
+  std::vector<double> const& point, double epsilon, double_vec& found_points,
   std::string metric){
   if (vp_tree == NULL){
     return;
@@ -271,35 +273,35 @@ void find_within_epsilon_helper(node<vector<double>>* vp_tree,
       return;
     }
     if (distance_root_to_point - cutoff_distance <= epsilon){
-      node<vector<double>>* left_child = vp_tree->get_left_child();
+      node<std::vector<double>>* left_child = vp_tree->get_left_child();
       if (left_child != NULL){
         find_within_epsilon_helper(left_child,point,epsilon,found_points,metric);
       }
     }
     if (cutoff_distance - distance_root_to_point <= epsilon){
-      node<vector<double>>* right_child = vp_tree->get_right_child();
+      node<std::vector<double>>* right_child = vp_tree->get_right_child();
       if (right_child != NULL){
         find_within_epsilon_helper(right_child,point,epsilon,found_points,metric);
       }
     }
   }
 }
-vector<vector<double>> find_within_epsilon(node<vector<double>>* vp_tree,
-  vector<double> const point, double epsilon, std::string metric){
-    vector<vector<double>> found_points = vector<vector<double>> ();
+double_vec find_within_epsilon(node<std::vector<double>>* vp_tree,
+  std::vector<double> const point, double epsilon, std::string metric){
+    double_vec found_points = double_vec();
     find_within_epsilon_helper(vp_tree,point,epsilon,found_points,metric);
     return found_points;
 }
 
 class tree_container{
   private:
-    node<vector<double>>* tree;
+    node<std::vector<double>>* tree;
 
   public:
     tree_container(){
       this->tree = NULL;
     }
-    tree_container(vector<vector<double>> data, std::string metric){
+    tree_container(double_vec data, std::string metric){
       this->tree = ::vp_tree(data,metric);
     }
     tree_container(pylist data, std::string metric){
@@ -310,19 +312,19 @@ class tree_container{
       double_vec data_in_vecs = pylist_to_double_vec(data);
       this->tree = ::vp_tree(data_in_vecs, "euclidean");
     }
-    vector<vector<double>> find_within_epsilon(
-      vector<double> const point, double epsilon, std::string metric){
+    double_vec find_within_epsilon(
+      std::vector<double> const point, double epsilon, std::string metric){
         return ::find_within_epsilon(this->tree, point, epsilon, metric);
     }
     pylist find_within_epsilon_py(
       pylist pypoint, double epsilon){
-        vector<double> point = pypoint_to_point(pypoint);
+        std::vector<double> point = pypoint_to_point(pypoint);
         return double_vec_to_pylist(
           ::find_within_epsilon(this->tree, point, epsilon, "euclidean"));
     }
     pylist find_within_epsilon_py(
       pylist pypoint, double epsilon, std::string metric){
-        vector<double> point = pypoint_to_point(pypoint);
+        std::vector<double> point = pypoint_to_point(pypoint);
         return double_vec_to_pylist(
           ::find_within_epsilon(this->tree, point, epsilon, metric));
     }
@@ -335,6 +337,7 @@ BOOST_PYTHON_MODULE(vp_tree) {
     using namespace boost::python;
 
     def("list_double_vec_list_test",list_double_vec_list_test);
+    // def("hello", hello);
 
     class_<tree_container>("tree_container", init<>()  )
       .def(init<pylist>())

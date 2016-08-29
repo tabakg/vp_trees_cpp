@@ -11,7 +11,7 @@ default: vp_tree.so
 vp_tree.so: vp_tree.o
 	$(CC) $(LIB) -Wl,-rpath,$(PYLIBPATH) -shared $< -o $@
 
-vp_tree.o: vp_tree.cpp Makefile
+vp_tree.o: vp_tree.cpp conversions.cpp Makefile
 	$(CC) $(OPTS) -c $< -o $@
 
 clean:
