@@ -4,14 +4,14 @@
 #include <vector>
 #include <math.h>       /* sqrt, acos */
 
-#include "conversions.h"
+// #include "conversions.h"
 
 typedef boost::python::list pylist;
 typedef std::vector<double> vector;
 typedef std::vector<vector> double_vec;
 
 // pylist double_vec_to_pylist(double_vec vec){return conversions::double_vec_to_pylist(vec);}
-// std::string hello(){return conversions::hello();}
+// std::string hello(){return ex_hello();}
 
 pylist double_vec_to_pylist(double_vec vec){
   pylist list;
@@ -115,9 +115,10 @@ double FS_metric(vector const& u, vector const& v){
                      + pow(inner_prod(u_r,v_i) - inner_prod(u_i,v_r),2) );
 
   if (inner >= 1.){ // this might happen due to numerical error. We don't want to pass this to acos.
+    // std::cout << inner << std::endl;
     return 0.;
   }
-  return acos(inner);//acos(inner);
+  return acos(sqrt(inner));//acos(inner);
 }
 double distance(vector const& u, vector const& v, std::string metric){
   if(metric == "FS_metric"){
@@ -129,6 +130,9 @@ double distance(vector const& u, vector const& v, std::string metric){
   else{
     throw std::invalid_argument("Not a known metric.");
   }
+}
+double FS_metric_py(pylist const& u, pylist const& v){
+  return FS_metric(pypoint_to_point(u),pypoint_to_point(v));
 }
 template <typename T>
 class node {
@@ -245,12 +249,12 @@ node<vector>* vp_tree(double_vec data, std::string metric){
 
     sort(data.begin(),data.end(),
       [vantage_point,metric](vector a, vector b)
-      { return distance(a,vantage_point,metric) > distance(b,vantage_point,metric);} );
+      { return distance(a,vantage_point,metric) < distance(b,vantage_point,metric);} );
 
-    int half_way = int( (data.size() + 1 ) / 2 );
+    int half_way = int( data.size() / 2 );
 
-    double_vec close_points (data.begin() + half_way, data.end() );
-    double_vec far_points (data.begin(), data.begin() + half_way );
+    double_vec far_points (data.begin() + half_way, data.end() );
+    double_vec close_points (data.begin(), data.begin() + half_way );
 
     node<vector>* left = vp_tree(close_points,metric);
     node<vector>* right = vp_tree(far_points,metric);
@@ -338,7 +342,8 @@ BOOST_PYTHON_MODULE(vp_tree) {
     using namespace boost::python;
 
     def("list_double_vec_list_test",list_double_vec_list_test);
-    // def("hello", hello);
+    // def("hello", ex_hello);
+    def("FS_metric", FS_metric_py);
 
     class_<tree_container>("tree_container", init<>()  )
       .def(init<pylist>())
