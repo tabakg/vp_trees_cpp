@@ -124,7 +124,7 @@ double distance(vector const& u, vector const& v, std::string metric){
   if(metric == "FS_metric"){
     return FS_metric(u,v);
   }
-  if(metric == "euclidean"){
+  else if(metric == "euclidean"){
     return l2_norm(vector_difference(u,v));
   }
   else{
