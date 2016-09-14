@@ -4,9 +4,7 @@
 #include <vector>
 #include <math.h>       /* sqrt, acos */
 #include <queue> /* nearest neighbors */
-#include <algorithm>
 #include <unordered_map> /* making dictionaries */
-#include <deque>
 
 // #include "conversions.h"
 
@@ -326,10 +324,13 @@ std::unordered_map<std::string,node<vector>*> make_dict(node<vector>* tree){
   make_dict_helper(tree, dict);
   return dict;
 }
-
-std::vector<vector> find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::string metric,
+double_vec find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::string metric,
   double max_dist = std::numeric_limits<double>::infinity() // upper bound on distance to nearest num neighbors.
   ){
+  /*
+    Return the num nearest neighbors of point in vp_tree. The first point is the farthest.
+    The structured returned is a heap as a function of distance from point.
+  */
   if (vp_tree == NULL){
     throw std::invalid_argument("Input tree is NULL!");
   }
@@ -338,7 +339,7 @@ std::vector<vector> find_N_neighbors(node<vector>* vp_tree, vector point, int nu
   }
 
   auto cmp = [point,metric](vector a, vector b) {return distance(a,point,metric) < distance(b,point,metric);};
-  std::vector<vector> neighbors;
+  double_vec neighbors;
 
   double current_dist;
   std::queue<node<vector>*> node_Q; // nodes to visit, organized as a queue.
