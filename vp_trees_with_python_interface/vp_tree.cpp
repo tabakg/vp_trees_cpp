@@ -392,14 +392,19 @@ double_vec find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::s
     // }
   }
   double_vec output_vec (neighbors.size());
-  unsigned i = neighbors.size() - 1;
-  while(!neighbors.empty()){
-      output_vec[i] = neighbors.top();
-      i--;
-      neighbors.pop();
-  }
+  // unsigned i = neighbors.size() - 1;
+  // while(!neighbors.empty()){
+  //     output_vec[i] = neighbors.top();
+  //     i--;
+  //     neighbors.pop();
+  // }
   return output_vec;
 }
+// double_vec find_all_N_neighbors(node<vector>* vp_tree, double_vec & data, int num, std::string metric){
+//   std::unordered_map<std::string,bool> tagged;
+//
+// }
+
 
 class tree_container{
   private:
