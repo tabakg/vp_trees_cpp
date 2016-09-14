@@ -146,42 +146,7 @@ class node {
     node<T>* right;
     int ID;
   public:
-    node(T point){
-      this->point = point;
-      this->left = NULL;
-      this->right = NULL;
-      this->distance = -1;
-      this->ID = -1;
-    }
-    node(T point, node<T>* left,double distance){
-      this->point = point;
-      this->left = left;
-      this->right = NULL;
-      this->distance = distance;
-      this->ID = -1;
-    }
-    node(T point, node<T> *left, node<T>* right,double distance){
-      this->point = point;
-      this->left = left;
-      this->right = right;
-      this->distance = distance;
-      this->ID = -1;
-    }
-    node(T point, int ID){
-      this->point = point;
-      this->left = NULL;
-      this->right = NULL;
-      this->distance = -1;
-      this->ID = ID;
-    }
-    node(T point, node<T>* left,double distance, int ID){
-      this->point = point;
-      this->left = left;
-      this->right = NULL;
-      this->distance = distance;
-      this->ID = ID;
-    }
-    node(T point, node<T> *left, node<T>* right,double distance, int ID){
+    node(T point, int ID, node<T> *left = NULL, double distance = -1., node<T>* right = NULL){
       this->point = point;
       this->left = left;
       this->right = right;
@@ -273,7 +238,7 @@ node<vector>* vp_tree(double_vec data, std::string metric, int ID = 0){
 
     double_vec singleton (data.begin(), data.end() );
     node<vector>* left = vp_tree(singleton,metric,ID+1);
-    return new node<vector>(vantage_point,left,distance(vantage_point, left->get_point(), metric ), ID);
+    return new node<vector>(vantage_point,ID,left,distance(vantage_point, left->get_point(), metric ));
   }
   else{
     vector vantage_point=data.back();
@@ -291,8 +256,9 @@ node<vector>* vp_tree(double_vec data, std::string metric, int ID = 0){
     node<vector>* left = vp_tree(close_points,metric,ID+1);
     node<vector>* right = vp_tree(far_points,metric,ID+2);
 
-    return new node<vector>(vantage_point,left,right,
-      0.5 * (distance(vantage_point, close_points.back(), metric ) + distance(vantage_point, far_points.front(), metric )), ID );
+    return new node<vector>(vantage_point,ID, left,
+      0.5 * (distance(vantage_point, close_points.back(), metric ) + distance(vantage_point, far_points.front(), metric )),
+      right);
   }
 };
 void find_within_epsilon_helper(node<vector>* vp_tree,
