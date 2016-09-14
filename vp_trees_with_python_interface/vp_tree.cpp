@@ -1,11 +1,11 @@
-#include <boost/python.hpp>
+#include <boost/python.hpp> /* python interface */
 #include <iostream>
 #include <random>
 #include <vector>
 #include <math.h>       /* sqrt, acos */
 #include <queue> /* nearest neighbors */
+#include <algorithm>
 #include <unordered_map> /* making dictionaries */
-#include <queue>
 
 // #include "conversions.h"
 
@@ -392,12 +392,12 @@ double_vec find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::s
     // }
   }
   double_vec output_vec (neighbors.size());
-  // unsigned i = neighbors.size() - 1;
-  // while(!neighbors.empty()){
-  //     output_vec[i] = neighbors.top();
-  //     i--;
-  //     neighbors.pop();
-  // }
+  unsigned i = neighbors.size() - 1;
+  while(!neighbors.empty()){
+      // output_vec[i] = neighbors.top();
+      // i--;
+      neighbors.pop();
+  }
   return output_vec;
 }
 // double_vec find_all_N_neighbors(node<vector>* vp_tree, double_vec & data, int num, std::string metric){
