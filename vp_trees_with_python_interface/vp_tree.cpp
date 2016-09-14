@@ -336,7 +336,7 @@ double_vec find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::s
   }
 
   auto cmp = [point,metric](vector a, vector b) {return distance(a,point,metric) < distance(b,point,metric);};
-  std::priority_queue<vector, double_vec, decltype(cmp) > neighbors(cmp);
+  std::vector<vector, double_vec> neighbors;
 
   double current_dist;
   std::queue<node<vector>*> node_Q; // nodes to visit, organized as a queue.
@@ -347,12 +347,13 @@ double_vec find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::s
     node_Q.pop();
     current_dist = distance(current_node->get_point(),point,metric);
     if (current_dist < max_dist){
-      neighbors.push(current_node->get_point());
+      neighbors.push_back(current_node->get_point());
+      std::make_heap(neighbors.begin(),neighbors.end(),cmp);
       if (neighbors.size() > num){
-        neighbors.pop();
+        neighbors.pop_back();
       } // keep only the top num neighbors
       if (neighbors.size() == num){
-        max_dist = distance(neighbors.top(),point,metric);
+        max_dist = distance(neighbors.back(),point,metric);
       } // update max_dist once we have num neighbors.
     }
     double cutoff_distance = vp_tree->get_distance();
@@ -391,14 +392,15 @@ double_vec find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::s
     //   }
     // }
   }
-  double_vec output_vec (neighbors.size());
-  unsigned i = neighbors.size() - 1;
-  while(!neighbors.empty()){
-      // output_vec[i] = neighbors.top();
-      // i--;
-      neighbors.pop();
-  }
-  return output_vec;
+  // double_vec output_vec (neighbors.size());
+  // unsigned i = neighbors.size() - 1;
+  // while(!neighbors.empty()){
+  //     // output_vec[i] = neighbors.top();
+  //     // i--;
+  //     neighbors.pop();
+  // }
+  // return output_vec;
+  return neighbors;
 }
 // double_vec find_all_N_neighbors(node<vector>* vp_tree, double_vec & data, int num, std::string metric){
 //   std::unordered_map<std::string,bool> tagged;
