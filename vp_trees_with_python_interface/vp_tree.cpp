@@ -4,7 +4,8 @@
 #include <vector>
 #include <math.h>       /* sqrt, acos */
 #include <queue> /* nearest neighbors */
-#include <unordered_map> /* making dictionaries */
+#include <unordered_map> /* dictionary from ID to node pointer */
+#include <unordered_set> /* tagging nodes */
 
 // #include "conversions.h"
 
@@ -256,9 +257,9 @@ node<vector>* vp_tree(double_vec data, std::string metric, int ID = 0){
     node<vector>* left = vp_tree(close_points,metric,ID+1);
     node<vector>* right = vp_tree(far_points,metric,ID+2);
 
-    return new node<vector>(vantage_point,ID, left,
-      0.5 * (distance(vantage_point, close_points.back(), metric ) + distance(vantage_point, far_points.front(), metric )),
-      right);
+    double dist = 0.5 * (distance(vantage_point, close_points.back(), metric )
+                       + distance(vantage_point, far_points.front(), metric ));
+    return new node<vector>(vantage_point,ID, left,dist,right);
   }
 };
 void find_within_epsilon_helper(node<vector>* vp_tree,
@@ -312,9 +313,10 @@ std::unordered_map<int,node<vector>*> make_dict(node<vector>* tree){
   make_dict_helper(tree, dict);
   return dict;
 }
-double_vec find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::string metric,
-  double max_dist = std::numeric_limits<double>::infinity() // upper bound on distance to nearest num neighbors.
-  ){
+std::vector<node<vector>*> find_N_neighbors(node<vector>* vp_tree,
+    vector point, int num, std::string metric,
+    double max_dist = std::numeric_limits<double>::infinity()  // upper bound on distance to nearest num neighbors.
+    ){
   /*
     Return the num nearest neighbors of point in vp_tree. The first point is the farthest.
     The structured returned is a heap as a function of distance from point.
@@ -326,8 +328,10 @@ double_vec find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::s
     throw std::invalid_argument("Must look for at least one neighbor. Please set num > 0.");
   }
 
-  auto cmp = [point,metric](vector a, vector b) {return distance(a,point,metric) < distance(b,point,metric);};
-  double_vec neighbors;
+  std::vector<node<vector>*> neighbors;
+
+  auto cmp = [point,metric](node<vector>* a, node<vector>* b)
+      {return distance(a->get_point(),point,metric) < distance(b->get_point(),point,metric);};
 
   double current_dist;
   std::queue<node<vector>*> node_Q; // nodes to visit, organized as a queue.
@@ -338,14 +342,14 @@ double_vec find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::s
     node_Q.pop();
     current_dist = distance(current_node->get_point(),point,metric);
     if (current_dist < max_dist){
-      neighbors.push_back(current_node->get_point());
+      neighbors.push_back(current_node);
       std::push_heap(neighbors.begin(),neighbors.end(),cmp);
       if (neighbors.size() > num){
         std::pop_heap(neighbors.begin(),neighbors.end(),cmp);
         neighbors.pop_back();
       } // keep only the top num neighbors
       if (neighbors.size() == num){
-        max_dist = distance(neighbors.front(),point,metric);
+        max_dist = distance(neighbors.front()->get_point(),point,metric);
       } // update max_dist once we have num neighbors.
     }
     double cutoff_distance = vp_tree->get_distance();
@@ -386,12 +390,41 @@ double_vec find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::s
   }
   return neighbors;
 }
-// std::vector<double_vec> find_all_N_neighbors(node<vector>* vp_tree, double_vec & data, int num, std::string metric){
-//   std::vector<double_vec> all_neighbors;
-//   std::unordered_map<std::string,bool> tagged;
+// std::vector<double_vec> find_all_N_neighbors(
+//     node<vector>* vp_tree,
+//     double_vec & data, int num, std::string metric,
+//     std::unordered_map<int,node<vector>*> dict
+//   ){
+//
+//   std::vector<node<vector>*> nearest_neighbrs_vector; // vector of nea
+//   std::unordered_set<int> untagged_nodes;
+//
+//   for (unsigned i = 0; i < dict.size(); i++){
+//     untagged_nodes.insert(i);
+//   }
+//
+//   while (tagged_nodes.size() > 0){
+//
+//
+//   }
+//
+//
+//   tagged.insert(vp_tree->get_ID())
 //
 // }
 
+pylist nodes_to_pylist(std::vector<node<vector>*> vec){
+  pylist list;
+  for (unsigned i = 0; i < vec.size(); i++) {
+    pylist sublist;
+    vector point = vec[i]->get_point();
+    for (unsigned j = 0; j < point.size(); j++){
+      sublist.append(point[j]);
+    }
+    list.append(sublist);
+  }
+  return list;
+}
 
 class tree_container{
   private:
@@ -437,13 +470,15 @@ class tree_container{
     }
     pylist find_N_neighbors_py(pylist pypoint, int num, std::string metric){
       vector point = pypoint_to_point(pypoint);
-      std::vector<vector> output = ::find_N_neighbors(this->tree, point, num, metric);
-      return double_vec_to_pylist(output);
+       std::vector<node<vector>*> nodes= ::find_N_neighbors(this->tree, point, num, metric);
+       pylist output = nodes_to_pylist(nodes);
+      return output;
     }
     pylist find_N_neighbors_py(pylist pypoint, int num){
       vector point = pypoint_to_point(pypoint);
-      std::vector<vector> output = ::find_N_neighbors(this->tree, point, num, "euclidean");
-      return double_vec_to_pylist(output);
+      std::vector<node<vector>*> nodes= ::find_N_neighbors(this->tree, point, num,"euclidean");
+      pylist output = nodes_to_pylist(nodes);
+     return output;
     }
 };
 

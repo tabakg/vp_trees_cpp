@@ -37,11 +37,16 @@ print ("average number of neighbors is " + str(ave_num_nbrs) )
 
 t4 = time.time()
 
-for point in data:
-# point = [0.]*dim
-    nearest_neighbrs = tree.find_N_neighbors(point,NN)
 
-# print nearest_neighbrs
+### nearest_neighbrs to zero
+# point = [0.]*dim
+# nearest_neighbrs = tree.find_N_neighbors(point,NN)
+
+### nearest_neighbrs to each point.
+# for point in data:
+#     nearest_neighbrs = tree.find_N_neighbors(point,NN)
+
+# print nearest_neighbrs[:100]
 
 t5 = time.time()
 
