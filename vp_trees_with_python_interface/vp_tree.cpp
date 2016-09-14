@@ -325,7 +325,9 @@ std::unordered_map<std::string,node<vector>*> make_dict(node<vector>* tree){
   return dict;
 }
 
-double_vec find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::string metric){
+double_vec find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::string metric,
+  double max_dist = std::numeric_limits<double>::infinity(); // upper bound on distance to nearest num neighbors.
+  ){
   if (vp_tree == NULL){
     throw std::invalid_argument("Input tree is NULL!");
   }
@@ -336,7 +338,6 @@ double_vec find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::s
   auto cmp = [point,metric](vector a, vector b) {return distance(a,point,metric) < distance(b,point,metric);};
   std::priority_queue<vector, double_vec, decltype(cmp) > neighbors(cmp);
 
-  double max_dist = std::numeric_limits<double>::infinity(); // upper bound on distance to nearest num neighbors.
   double current_dist;
   std::queue<node<vector>*> node_Q; // nodes to visit, organized as a queue.
   node_Q.push(vp_tree);
