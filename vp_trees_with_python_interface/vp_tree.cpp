@@ -144,24 +144,52 @@ class node {
     double distance;
     node<T>* left;
     node<T>* right;
+    int ID;
   public:
     node(T point){
       this->point = point;
       this->left = NULL;
       this->right = NULL;
       this->distance = -1;
+      this->ID = -1;
     }
     node(T point, node<T>* left,double distance){
       this->point = point;
       this->left = left;
       this->right = NULL;
       this->distance = distance;
+      this->ID = -1;
     }
     node(T point, node<T> *left, node<T>* right,double distance){
       this->point = point;
       this->left = left;
       this->right = right;
       this->distance = distance;
+      this->ID = -1;
+    }
+    node(T point, int ID){
+      this->point = point;
+      this->left = NULL;
+      this->right = NULL;
+      this->distance = -1;
+      this->ID = ID;
+    }
+    node(T point, node<T>* left,double distance, int ID){
+      this->point = point;
+      this->left = left;
+      this->right = NULL;
+      this->distance = distance;
+      this->ID = ID;
+    }
+    node(T point, node<T> *left, node<T>* right,double distance, int ID){
+      this->point = point;
+      this->left = left;
+      this->right = right;
+      this->distance = distance;
+      this->ID = ID;
+    }
+    int get_ID(){
+      return this->ID;
     }
     T get_point(){
       return this->point;
@@ -177,6 +205,7 @@ class node {
     }
     std::string print_tree(){
       std::string s = "{point: " + vec_to_string(this->point);
+      s += ", ID: " + std::to_string(this->ID);
       s += ", distance: " + std::to_string(this->distance);
       if (this->left){
         s += ", left child: ";
@@ -231,20 +260,20 @@ void print_data(double_vec const& data){
   }
   std::cout << "]." << std::endl;
 }
-node<vector>* vp_tree(double_vec data, std::string metric){
+node<vector>* vp_tree(double_vec data, std::string metric, int ID = 0){
   if (data.size() == 0){
     return NULL;
   }
   else if (data.size() == 1){
-    return new node<vector>(data.back());
+    return new node<vector>(data.back(),ID);
   }
   else if (data.size() == 2){
     vector vantage_point=data.back();
     data.pop_back();
 
     double_vec singleton (data.begin(), data.end() );
-    node<vector>* left = vp_tree(singleton,metric);
-    return new node<vector>(vantage_point,left,distance(vantage_point, left->get_point(), metric ));
+    node<vector>* left = vp_tree(singleton,metric,ID+1);
+    return new node<vector>(vantage_point,left,distance(vantage_point, left->get_point(), metric ), ID);
   }
   else{
     vector vantage_point=data.back();
@@ -259,11 +288,11 @@ node<vector>* vp_tree(double_vec data, std::string metric){
     double_vec close_points (data.begin(), data.begin() + half_way );
     double_vec far_points (data.begin() + half_way, data.end() );
 
-    node<vector>* left = vp_tree(close_points,metric);
-    node<vector>* right = vp_tree(far_points,metric);
+    node<vector>* left = vp_tree(close_points,metric,ID+1);
+    node<vector>* right = vp_tree(far_points,metric,ID+2);
 
     return new node<vector>(vantage_point,left,right,
-      0.5 * (distance(vantage_point, close_points.back(), metric ) + distance(vantage_point, far_points.front(), metric )) );
+      0.5 * (distance(vantage_point, close_points.back(), metric ) + distance(vantage_point, far_points.front(), metric )), ID );
   }
 };
 void find_within_epsilon_helper(node<vector>* vp_tree,
@@ -396,17 +425,10 @@ double_vec find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::s
     //   }
     // }
   }
-  // double_vec output_vec (neighbors.size());
-  // unsigned i = neighbors.size() - 1;
-  // while(!neighbors.empty()){
-  //     // output_vec[i] = neighbors.top();
-  //     // i--;
-  //     neighbors.pop();
-  // }
-  // return output_vec;
   return neighbors;
 }
-// double_vec find_all_N_neighbors(node<vector>* vp_tree, double_vec & data, int num, std::string metric){
+// std::vector<double_vec> find_all_N_neighbors(node<vector>* vp_tree, double_vec & data, int num, std::string metric){
+//   std::vector<double_vec> all_neighbors;
 //   std::unordered_map<std::string,bool> tagged;
 //
 // }
