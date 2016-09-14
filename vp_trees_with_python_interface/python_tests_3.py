@@ -5,7 +5,7 @@ from numpy import linalg as la
 from numpy.random import normal
 import random
 
-dim = 2
+dim = 10
 data_size = 10
 
 epsilon = 0.1

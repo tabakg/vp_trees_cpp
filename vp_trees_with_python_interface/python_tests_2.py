@@ -4,12 +4,14 @@ import numpy as np
 from numpy.random import normal
 import random
 
-dim = 1
+dim = 10
 data_size = 1000
 
 mu = 0.0
 sigma = 1.0
-epsilon = 1.0
+epsilon = 3.
+
+NN = 50
 
 print("\n Test for euclidean metric #2. : \n")
 
@@ -23,7 +25,7 @@ tree = vp_tree.tree_container(data)
 t1 = time.time()
 s = tree.print_tree() ## print tree contents.
 t2 = time.time()
-close_points = tree.find_within_epsilon([0.]*dim,epsilon);
+close_points = tree.find_within_epsilon([0.]*dim,epsilon)
 t3 = time.time()
 
 ave_num_nbrs = 0
@@ -35,7 +37,13 @@ print ("average number of neighbors is " + str(ave_num_nbrs) )
 
 t4 = time.time()
 
+for point in data:
+    nearest_neighbrs = tree.find_N_neighbors(point,NN)
+
+t5 = time.time()
+
 print("making tree", t1-t0)
 print("making tree print statement",t2-t1)
 print("finding near epsilon around zero", t3-t2)
 print("finding near epsilon for all points", t4-t3)
+print("finding " + str(NN) + " nearest neighbors", t5-t4)

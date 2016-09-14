@@ -3,6 +3,9 @@
 #include <random>
 #include <vector>
 #include <math.h>       /* sqrt, acos */
+#include <queue> /* nearest neighbors */
+#include <unordered_map> /* making dictionaries */
+#include <queue>
 
 // #include "conversions.h"
 
@@ -247,19 +250,20 @@ node<vector>* vp_tree(double_vec data, std::string metric){
     vector vantage_point=data.back();
     data.pop_back();
 
-    sort(data.begin(),data.end(),
-      [vantage_point,metric](vector a, vector b)
-      { return distance(a,vantage_point,metric) < distance(b,vantage_point,metric);} );
+    auto cmp = [vantage_point,metric](vector a, vector b)
+      {return distance(a,vantage_point,metric) < distance(b,vantage_point,metric);};
+    sort(data.begin(),data.end(), cmp);
 
     int half_way = int( data.size() / 2 );
 
-    double_vec far_points (data.begin() + half_way, data.end() );
     double_vec close_points (data.begin(), data.begin() + half_way );
+    double_vec far_points (data.begin() + half_way, data.end() );
 
     node<vector>* left = vp_tree(close_points,metric);
     node<vector>* right = vp_tree(far_points,metric);
 
-    return new node<vector>(vantage_point,left,right,distance(vantage_point, left->get_point(), metric ) );
+    return new node<vector>(vantage_point,left,right,
+      0.5 * (distance(vantage_point, close_points.back(), metric ) + distance(vantage_point, far_points.front(), metric )) );
   }
 };
 void find_within_epsilon_helper(node<vector>* vp_tree,
@@ -274,18 +278,14 @@ void find_within_epsilon_helper(node<vector>* vp_tree,
       found_points.push_back(vp_tree->get_point() );
     }
     double cutoff_distance = vp_tree->get_distance();
-    if (cutoff_distance < -0.5){
-      return;
-    }
-    if (distance_root_to_point - cutoff_distance <= epsilon){
-      node<vector>* left_child = vp_tree->get_left_child();
-      if (left_child != NULL){
+
+    node<vector>* left_child = vp_tree->get_left_child();
+    if (left_child != NULL){
+      if (distance_root_to_point - cutoff_distance <= epsilon){
         find_within_epsilon_helper(left_child,point,epsilon,found_points,metric);
       }
-    }
-    if (cutoff_distance - distance_root_to_point <= epsilon){
       node<vector>* right_child = vp_tree->get_right_child();
-      if (right_child != NULL){
+      if (right_child != NULL && (cutoff_distance - distance_root_to_point <= epsilon)){
         find_within_epsilon_helper(right_child,point,epsilon,found_points,metric);
       }
     }
@@ -297,10 +297,113 @@ double_vec find_within_epsilon(node<vector>* vp_tree,
     find_within_epsilon_helper(vp_tree,point,epsilon,found_points,metric);
     return found_points;
 }
+std::string hash_vector(vector vec){
+  std::string s = "";
+  for(unsigned i = 0; i < vec.size(); i++){
+    s += std::to_string(vec[i]);
+  }
+  return s;
+}
+void make_dict_helper(node<vector>* tree, std::unordered_map<std::string,node<vector>*>& dict){
+  if (tree == NULL){
+    return;
+  }
+  dict.emplace(hash_vector(tree->get_point()),tree);
+  node<vector>* left_child = tree->get_left_child();
+  if (left_child != NULL){
+    make_dict_helper(left_child, dict);
+    node<vector>* right_child = tree->get_right_child();
+    if (right_child != NULL){
+      make_dict_helper(right_child, dict);
+    }
+  }
+  return;
+}
+std::unordered_map<std::string,node<vector>*> make_dict(node<vector>* tree){
+  std::unordered_map<std::string,node<vector>*> dict;
+  make_dict_helper(tree, dict);
+  return dict;
+}
+
+double_vec find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::string metric){
+  if (vp_tree == NULL){
+    throw std::invalid_argument("Input tree is NULL!");
+  }
+  if (num < 1){
+    throw std::invalid_argument("Must look for at least one neighbor. Please set num > 0.");
+  }
+
+  auto cmp = [point,metric](vector a, vector b) {return distance(a,point,metric) < distance(b,point,metric);};
+  std::priority_queue<vector, double_vec, decltype(cmp) > neighbors(cmp);
+
+  double max_dist = std::numeric_limits<double>::infinity(); // upper bound on distance to nearest num neighbors.
+  double current_dist;
+  std::queue<node<vector>*> node_Q; // nodes to visit, organized as a queue.
+  node_Q.push(vp_tree);
+
+  while (!node_Q.empty()){
+    node<vector>* current_node = node_Q.front();
+    node_Q.pop();
+    current_dist = distance(current_node->get_point(),point,metric);
+    if (current_dist < max_dist){
+      neighbors.push(current_node->get_point());
+      if (neighbors.size() > num){
+        neighbors.pop();
+      } // keep only the top num neighbors
+      if (neighbors.size() == num){
+        max_dist = distance(neighbors.top(),point,metric);
+      } // update max_dist once we have num neighbors.
+    }
+    double cutoff_distance = vp_tree->get_distance();
+
+    // // original heuristic used for VP trees.
+
+    node<vector>* left_child = current_node->get_left_child();
+    node<vector>* right_child = current_node->get_right_child();
+    if (current_dist <= cutoff_distance){
+      if (current_dist - max_dist < cutoff_distance && left_child != NULL){
+        node_Q.push(left_child);
+      }
+      if (current_dist + max_dist >= cutoff_distance && right_child != NULL){
+        node_Q.push(right_child);
+      }
+    }
+    else{
+      if (current_dist + max_dist >= cutoff_distance && right_child != NULL){
+        node_Q.push(right_child);
+      }
+      if (current_dist - max_dist <= cutoff_distance && left_child != NULL){
+        node_Q.push(left_child);
+      }
+    }
+
+    // // different heuristic for the order, was not substantially slower or faster.
+
+    // node<vector>* left_child = current_node->get_left_child();
+    // if (left_child != NULL){
+    //   if(current_dist - cutoff_distance <= max_dist){
+    //     node_Q.push(left_child);
+    //   }
+    //   node<vector>* right_child = current_node->get_right_child();
+    //   if(right_child != NULL && (cutoff_distance - current_dist <= max_dist)){
+    //     node_Q.push(right_child);
+    //   }
+    // }
+  }
+  double_vec output_vec (neighbors.size());
+  unsigned i = neighbors.size() - 1;
+  while(!neighbors.empty()){
+      output_vec[i] = neighbors.top();
+      i--;
+      neighbors.pop();
+  }
+  return output_vec;
+}
 
 class tree_container{
   private:
     node<vector>* tree;
+    std::unordered_map<std::string,node<vector>*> dict;
 
   public:
     tree_container(){
@@ -336,6 +439,19 @@ class tree_container{
     std::string print_tree(){
       return this->tree->print_tree();
     }
+    void make_dict(){
+      this->dict = ::make_dict(tree);
+    }
+    pylist find_N_neighbors_py(pylist pypoint, int num, std::string metric){
+      vector point = pypoint_to_point(pypoint);
+      double_vec output = ::find_N_neighbors(this->tree, point, num, metric);
+      return double_vec_to_pylist(output);
+    }
+    pylist find_N_neighbors_py(pylist pypoint, int num){
+      vector point = pypoint_to_point(pypoint);
+      double_vec output = ::find_N_neighbors(this->tree, point, num, "euclidean");
+      return double_vec_to_pylist(output);
+    }
 };
 
 BOOST_PYTHON_MODULE(vp_tree) {
@@ -352,5 +468,7 @@ BOOST_PYTHON_MODULE(vp_tree) {
       .def("find_within_epsilon", (pylist (tree_container::*) (pylist, double)) &tree_container::find_within_epsilon_py)
       .def("find_within_epsilon", (pylist (tree_container::*) (pylist, double, std::string)) &tree_container::find_within_epsilon_py)
       .def("print_tree",&tree_container::print_tree)
+      .def("find_N_neighbors",(pylist (tree_container::*) (pylist, int)) &tree_container::find_N_neighbors_py )
+      .def("find_N_neighbors",(pylist (tree_container::*) (pylist, int, std::string)) &tree_container::find_N_neighbors_py )
     ;
 }
