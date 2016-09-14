@@ -326,18 +326,11 @@ double_vec find_within_epsilon(node<vector>* vp_tree,
     find_within_epsilon_helper(vp_tree,point,epsilon,found_points,metric);
     return found_points;
 }
-std::string hash_vector(vector vec){
-  std::string s = "";
-  for(unsigned i = 0; i < vec.size(); i++){
-    s += std::to_string(vec[i]);
-  }
-  return s;
-}
-void make_dict_helper(node<vector>* tree, std::unordered_map<std::string,node<vector>*>& dict){
+void make_dict_helper(node<vector>* tree, std::unordered_map<int,node<vector>*>& dict){
   if (tree == NULL){
     return;
   }
-  dict.emplace(hash_vector(tree->get_point()),tree);
+  dict.emplace(tree->get_ID(),tree);
   node<vector>* left_child = tree->get_left_child();
   if (left_child != NULL){
     make_dict_helper(left_child, dict);
@@ -348,8 +341,8 @@ void make_dict_helper(node<vector>* tree, std::unordered_map<std::string,node<ve
   }
   return;
 }
-std::unordered_map<std::string,node<vector>*> make_dict(node<vector>* tree){
-  std::unordered_map<std::string,node<vector>*> dict;
+std::unordered_map<int,node<vector>*> make_dict(node<vector>* tree){
+  std::unordered_map<int,node<vector>*> dict;
   make_dict_helper(tree, dict);
   return dict;
 }
@@ -437,7 +430,7 @@ double_vec find_N_neighbors(node<vector>* vp_tree, vector point, int num, std::s
 class tree_container{
   private:
     node<vector>* tree;
-    std::unordered_map<std::string,node<vector>*> dict;
+    std::unordered_map<int,node<vector>*> dict;
 
   public:
     tree_container(){
