@@ -4,14 +4,14 @@ import numpy as np
 from numpy.random import normal
 import random
 
-dim = 10
+dim = 1
 data_size = 1000
 
 mu = 0.0
 sigma = 1.0
 epsilon = 3.
 
-NN = 50
+NN = 10
 
 print("\n Test for euclidean metric #2. : \n")
 
@@ -37,8 +37,11 @@ print ("average number of neighbors is " + str(ave_num_nbrs) )
 
 t4 = time.time()
 
-for point in data:
-    nearest_neighbrs = tree.find_N_neighbors(point,NN)
+# for point in data:
+point = [0.]*dim
+nearest_neighbrs = tree.find_N_neighbors(point,NN)
+
+print nearest_neighbrs
 
 t5 = time.time()
 
