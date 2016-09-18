@@ -3,15 +3,17 @@ import time
 import numpy as np
 from numpy.random import normal
 import random
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
 
 dim = 1
-data_size = 1000
+data_size = 2000
 
 mu = 0.0
 sigma = 1.0
-epsilon = 3.
+epsilon = 0.3
 
-NN = 50
+NN = 300
 
 print("\n Test for euclidean metric #2. : \n")
 
@@ -37,21 +39,32 @@ print ("average number of neighbors is " + str(ave_num_nbrs) )
 
 t4 = time.time()
 
-
 ### nearest_neighbrs to zero
 # point = [0.]*dim
 # nearest_neighbrs = tree.find_N_neighbors(point,NN)
 
 ### nearest_neighbrs to each point.
-# for point in data:
-#     nearest_neighbrs = tree.find_N_neighbors(point,NN)
-
-# print nearest_neighbrs[:100]
+nearest_neighbrs =[]
+for point in data:
+    nearest_neighbrs.append(tree.find_N_neighbors(point,NN))
 
 t5 = time.time()
+
+neighborhoods = tree.find_all_N_neighbors(NN);
+
+# print "individual nieghborhoods"
+# pp.pprint(nearest_neighbrs)
+# print "all neighborhoods:"
+# pp.pprint(neighborhoods)
+# print "original data"
+# pp.pprint(data)
+# print s
+
+t6 = time.time()
 
 print("making tree", t1-t0)
 print("making tree print statement",t2-t1)
 print("finding near epsilon around zero", t3-t2)
 print("finding near epsilon for all points", t4-t3)
 print("finding " + str(NN) + " nearest neighbors", t5-t4)
+print("finding all " + str(NN) + " nearest neighbors at once: ", t6-t5)
