@@ -406,7 +406,8 @@ std::vector<node<vector>*> find_N_neighbors(node<vector>* vp_tree,
 std::vector<std::vector<node<vector>*>> find_all_N_neighbors(
     node<vector>* vp_tree,
     double_vec & data, int num, std::string metric,
-    std::unordered_map<int,node<vector>*> dict){
+    std::unordered_map<int,node<vector>*> dict,
+    double numerical_error = 1e-12){
   if (dict.size() == 0){
     throw std::invalid_argument("dict has size zero.");
   }
@@ -422,8 +423,6 @@ std::vector<std::vector<node<vector>*>> find_all_N_neighbors(
   node<vector>* past_node;
   double max_dist;
 
-  double count = 0;
-
   while (untagged_nodes.size() > 0){ // while there are still unvisited nodes
     bool different_neighborhood = true; // no more nodes in current neighborhood; pick another untagged node.
     for (auto it = current_neighborhood.rbegin(); it != current_neighborhood.rend(); ++ it){ // iterate through the current neighborhood from nearest to farthest
@@ -432,14 +431,14 @@ std::vector<std::vector<node<vector>*>> find_all_N_neighbors(
         past_node = current_node;
         current_node = dict[* next]; // update current node.
         untagged_nodes.erase(next); // tag node
-        max_dist = distance(current_node->get_point(), current_neighborhood.back()->get_point(), metric)
-                 + distance(current_node->get_point(), past_node->get_point(), metric);
+        max_dist = distance(past_node->get_point(), current_neighborhood.front()->get_point(), metric)
+                 + distance(current_node->get_point(), past_node->get_point(), metric)
+                 + numerical_error;
         different_neighborhood = false;
         break; // break out of the loop since we found the nearest untagged neighbor.
       }
     }
     if (different_neighborhood){
-      count ++;
       auto next = untagged_nodes.begin(); // choose a node arbitrarily. This could be modified in the future to use a different heuristic.
       current_node = dict[*next]; // tag node.
       untagged_nodes.erase(next);
@@ -448,7 +447,6 @@ std::vector<std::vector<node<vector>*>> find_all_N_neighbors(
     current_neighborhood = find_N_neighbors(vp_tree, current_node->get_point(), num, metric, max_dist);
     nearest_neighbrs_vector[current_node->get_ID()] = current_neighborhood;
   }
-  std::cout << "number of different neighborhods " << count << std::endl;
   return nearest_neighbrs_vector;
 }
 
@@ -555,7 +553,6 @@ class tree_container{
       }
       std::vector<std::vector<node<vector>*>> neighbors_vector = find_all_N_neighbors(
         this->tree, this->data, num, metric, this->dict);
-      std::cout<< "got neighbors_vector";
       return double_vec_nodes_to_pylist(neighbors_vector);
     }
     pylist find_all_N_neighbors_py(int num){

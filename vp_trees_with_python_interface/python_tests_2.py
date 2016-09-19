@@ -7,13 +7,13 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 dim = 1
-data_size = 2000
+data_size = 500
 
 mu = 0.0
 sigma = 1.0
-epsilon = 0.3
+epsilon = 0.35
 
-NN = 300
+NN = 100
 
 print("\n Test for euclidean metric #2. : \n")
 
@@ -51,6 +51,8 @@ for point in data:
 t5 = time.time()
 
 neighborhoods = tree.find_all_N_neighbors(NN);
+
+print "Are neighborhoods generated both ways the same? " + str(neighborhoods == nearest_neighbrs)
 
 # print "individual nieghborhoods"
 # pp.pprint(nearest_neighbrs)
