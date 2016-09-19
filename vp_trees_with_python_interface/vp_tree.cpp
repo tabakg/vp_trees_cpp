@@ -273,7 +273,7 @@ node<vector>* vp_tree(double_vec data, std::string metric){
   return vp_tree_helper(data_points,metric);
 }
 void find_within_epsilon_helper(node<vector>* vp_tree,
-  vector const& point, double epsilon, double_vec& found_points,
+  vector const& point, double epsilon, std::vector<node<vector>*> & found_points,
   std::string metric){
   if (vp_tree == NULL){
     return;
@@ -281,7 +281,7 @@ void find_within_epsilon_helper(node<vector>* vp_tree,
   else{
     double distance_root_to_point = distance(vp_tree->get_point(), point, metric);
     if (distance_root_to_point <= epsilon){
-      found_points.push_back(vp_tree->get_point() );
+      found_points.push_back(vp_tree);
     }
     double cutoff_distance = vp_tree->get_distance();
 
@@ -297,9 +297,9 @@ void find_within_epsilon_helper(node<vector>* vp_tree,
     }
   }
 }
-double_vec find_within_epsilon(node<vector>* vp_tree,
+std::vector<node<vector>*> find_within_epsilon(node<vector>* vp_tree,
   vector const point, double epsilon, std::string metric){
-    double_vec found_points = double_vec();
+    std::vector<node<vector>*> found_points;
     find_within_epsilon_helper(vp_tree,point,epsilon,found_points,metric);
     return found_points;
 }
@@ -407,7 +407,7 @@ std::vector<std::vector<node<vector>*>> find_all_N_neighbors(
     node<vector>* vp_tree,
     double_vec & data, int num, std::string metric,
     std::unordered_map<int,node<vector>*> dict,
-    double numerical_error = 1e-12){
+    double numerical_error = 1e-13){
   if (dict.size() == 0){
     throw std::invalid_argument("dict has size zero.");
   }
@@ -425,6 +425,7 @@ std::vector<std::vector<node<vector>*>> find_all_N_neighbors(
 
   while (untagged_nodes.size() > 0){ // while there are still unvisited nodes
     bool different_neighborhood = true; // no more nodes in current neighborhood; pick another untagged node.
+    // for (auto it = current_neighborhood.rend() - num; it != current_neighborhood.rend(); ++ it){ // iterate through the current neighborhood from nearest to farthest
     for (auto it = current_neighborhood.rbegin(); it != current_neighborhood.rend(); ++ it){ // iterate through the current neighborhood from nearest to farthest
       auto next = untagged_nodes.find((*it)->get_ID());
       if (next != untagged_nodes.end() ){ // if node is untagged
@@ -445,6 +446,7 @@ std::vector<std::vector<node<vector>*>> find_all_N_neighbors(
       max_dist = std::numeric_limits<double>::infinity();
     }
     current_neighborhood = find_N_neighbors(vp_tree, current_node->get_point(), num, metric, max_dist);
+    // current_neighborhood = find_within_epsilon(vp_tree, current_node->get_point(), max_dist, metric);
     nearest_neighbrs_vector[current_node->get_ID()] = current_neighborhood;
   }
   return nearest_neighbrs_vector;
@@ -506,20 +508,20 @@ class tree_container{
       this->tree = ::vp_tree(data_in_vecs, "euclidean");
       this->data = data_in_vecs;
     }
-    double_vec find_within_epsilon(
+    std::vector<node<vector>*> find_within_epsilon(
       vector const point, double epsilon, std::string metric){
         return ::find_within_epsilon(this->tree, point, epsilon, metric);
     }
     pylist find_within_epsilon_py(
       pylist pypoint, double epsilon){
         vector point = pypoint_to_point(pypoint);
-        return double_vec_to_pylist(
+        return nodes_to_pylist(
           ::find_within_epsilon(this->tree, point, epsilon, "euclidean"));
     }
     pylist find_within_epsilon_py(
       pylist pypoint, double epsilon, std::string metric){
         vector point = pypoint_to_point(pypoint);
-        return double_vec_to_pylist(
+        return nodes_to_pylist(
           ::find_within_epsilon(this->tree, point, epsilon, metric));
     }
     std::string print_tree(){

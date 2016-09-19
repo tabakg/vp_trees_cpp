@@ -7,11 +7,11 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 dim = 1
-data_size = 500
+data_size = 1000
 
 mu = 0.0
 sigma = 1.0
-epsilon = 0.35
+epsilon = 0.2
 
 NN = 100
 
