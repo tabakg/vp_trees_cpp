@@ -425,7 +425,6 @@ std::vector<std::vector<node<vector>*>> find_all_N_neighbors(
 
   while (untagged_nodes.size() > 0){ // while there are still unvisited nodes
     bool different_neighborhood = true; // no more nodes in current neighborhood; pick another untagged node.
-    // for (auto it = current_neighborhood.rend() - num; it != current_neighborhood.rend(); ++ it){ // iterate through the current neighborhood from nearest to farthest
     for (auto it = current_neighborhood.rbegin(); it != current_neighborhood.rend(); ++ it){ // iterate through the current neighborhood from nearest to farthest
       auto next = untagged_nodes.find((*it)->get_ID());
       if (next != untagged_nodes.end() ){ // if node is untagged
@@ -446,7 +445,6 @@ std::vector<std::vector<node<vector>*>> find_all_N_neighbors(
       max_dist = std::numeric_limits<double>::infinity();
     }
     current_neighborhood = find_N_neighbors(vp_tree, current_node->get_point(), num, metric, max_dist);
-    // current_neighborhood = find_within_epsilon(vp_tree, current_node->get_point(), max_dist, metric);
     nearest_neighbrs_vector[current_node->get_ID()] = current_neighborhood;
   }
   return nearest_neighbrs_vector;
