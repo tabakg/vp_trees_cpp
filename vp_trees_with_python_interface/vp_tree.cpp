@@ -92,10 +92,11 @@ double FS_metric(vector const& u, vector const& v){
 
   Args:
     u,v: Two vectors of even dimension. The first n/2 components represent the real part,
-    the next n/2 components represent the imaginary part.
+    the next n/2 components represent the imaginary part. I assume here both
+    u and v have been normalized.
 
   Returns:
-    Fubini-Study metric.
+    Fubini-Study metric between u and v.
   */
   if (u.size() != v.size()){
     throw std::invalid_argument("vectors have different sizes.");
@@ -116,7 +117,7 @@ double FS_metric(vector const& u, vector const& v){
   if (inner >= 1.){ // this might happen due to numerical error. We don't want to pass this to acos.
     return 0.;
   }
-  return acos(sqrt(inner));//acos(inner);
+  return acos(sqrt(inner));
 }
 double distance(vector const& u, vector const& v, std::string metric){
   if(metric == "FS_metric"){
