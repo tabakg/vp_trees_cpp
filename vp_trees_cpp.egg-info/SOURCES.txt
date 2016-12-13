@@ -1,0 +1,10 @@
+setup.py
+vp_trees_cpp/__init__.py
+vp_trees_cpp/python_tests.py
+vp_trees_cpp/python_tests_2.py
+vp_trees_cpp/python_tests_3.py
+vp_trees_cpp.egg-info/PKG-INFO
+vp_trees_cpp.egg-info/SOURCES.txt
+vp_trees_cpp.egg-info/dependency_links.txt
+vp_trees_cpp.egg-info/not-zip-safe
+vp_trees_cpp.egg-info/top_level.txt
